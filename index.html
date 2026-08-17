@@ -1,0 +1,892 @@
+﻿<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Comprehensive SEO & Search Engine Indexing Meta Tags -->
+    <title>KanaCraft - Master Japanese Hiragana & Katakana Smart Flashcards</title>
+    <meta name="description" content="Unlock fluent Japanese reading with KanaCraft! Featuring smart memory scheduling, stroke-drawing canvases, audio pronunciations, timed speed drills, and custom practice decks.">
+    <meta name="keywords" content="learn hiragana, learn katakana, japanese flashcards, kana study, japanese alphabet, romaji support, smart flashcards, kanacraft">
+    <meta name="author" content="KanaCraft">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph / Social Media Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://kanacraft-learn.com/">
+    <meta property="og:title" content="KanaCraft - Master Japanese Hiragana & Katakana">
+    <meta property="og:description" content="Transform your Japanese language journey with smart memory scheduling, flashcards, native audio support, and speed drills.">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1528164344705-475426879c0d?auto=format&fit=crop&w=1200&q=80">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Zen+Maru+Gothic:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Zen Maru Gothic', sans-serif; }
+        .japanese-serif { font-family: 'Noto Serif JP', serif; }
+        .oriental-bg {
+            background-color: #fcfbf9;
+            background-image: radial-gradient(#d4af37 0.5px, transparent 0.5px), radial-gradient(#d4af37 0.5px, #fcfbf9 0.5px);
+            background-size: 24px 24px;
+            background-position: 0 0, 12px 12px;
+        }
+        .dark .oriental-bg {
+            background-color: #101010;
+            background-image: radial-gradient(#332715 0.5px, transparent 0.5px), radial-gradient(#332715 0.5px, #101010 0.5px);
+            background-size: 24px 24px;
+            background-position: 0 0, 12px 12px;
+        }
+        .drawing-grid {
+            background-image: linear-gradient(to right, rgba(200,200,200,0.2) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(200,200,200,0.2) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        @keyframes cardCorrect {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); border-color: #10b981; }
+            100% { transform: scale(1); }
+        }
+        @keyframes cardIncorrect {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-8px); border-color: #ef4444; }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-6px); }
+            80% { transform: translateX(6px); }
+            100% { transform: translateX(0); }
+        }
+        .animate-correct { animation: cardCorrect 0.35s ease-in-out; }
+        .animate-incorrect { animation: cardIncorrect 0.35s ease-in-out; }
+    </style>
+</head>
+<body class="oriental-bg text-stone-800 dark:text-stone-100 min-h-screen flex flex-col transition-colors duration-300">
+
+    <!-- Header & Navigation -->
+    <header class="border-b border-amber-900/20 dark:border-amber-500/20 backdrop-blur-md sticky top-0 z-40 bg-white/80 dark:bg-stone-900/80">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2 cursor-pointer" onclick="switchTab('guide')">
+                <span class="text-2xl japanese-serif font-bold text-red-600 dark:text-red-500">仮名</span>
+                <span class="text-xl font-bold tracking-wide">Kana<span class="text-amber-600 dark:text-amber-400">Craft</span></span>
+            </div>
+            
+            <nav class="hidden md:flex space-x-6 text-sm font-semibold">
+                <button onclick="switchTab('guide')" id="nav-guide" class="nav-link text-red-600 dark:text-red-400 transition">Mastery Charts</button>
+                <button onclick="switchTab('flashcards')" id="nav-flashcards" class="nav-link hover:text-red-500 transition">🧠 Smart Flashcards</button>
+                <button onclick="switchTab('speeddrill')" id="nav-speeddrill" class="nav-link hover:text-red-500 transition">⚡ Speed Drill</button>
+                <button onclick="switchTab('about')" id="nav-about" class="nav-link hover:text-red-500 transition">About & Community</button>
+            </nav>
+
+            <div class="flex items-center space-x-3">
+                <!-- Daily Streak Badge -->
+                <div class="hidden sm:flex items-center space-x-1 text-xs bg-red-100 dark:bg-red-950/60 border border-red-300 dark:border-red-800 px-3 py-1.5 rounded-full font-bold text-red-700 dark:text-red-300 shadow-sm" title="Your Daily Study Streak">
+                    <span>🔥 Streak:</span> <span id="streakCount">1</span> <span class="text-[10px] font-normal">days</span>
+                </div>
+
+                <button onclick="toggleRomaji()" class="text-xs bg-amber-100 dark:bg-stone-800 border border-amber-300 dark:border-amber-700 px-3 py-1.5 rounded-full font-medium transition flex items-center space-x-1">
+                    <span>Romaji Guide:</span> <span id="romajiStatus" class="text-green-600 dark:text-green-400 font-bold">ON</span>
+                </button>
+                <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-stone-200 dark:hover:bg-stone-800 transition" aria-label="Toggle Dark Mode">
+                    🌙
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-8 space-y-12">
+
+        <!-- TAB 1: KANA CHARTS & INDIVIDUAL STATUS SETTING -->
+        <section id="tab-guide" class="space-y-8">
+            <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-2xl border border-amber-900/20 dark:border-amber-500/20 shadow-sm space-y-4 max-w-4xl mx-auto text-center md:text-left">
+                <h1 class="text-3xl font-bold japanese-serif text-red-600 dark:text-red-500">Master Japanese Reading with Smart Memory</h1>
+                <p class="text-stone-600 dark:text-stone-300 leading-relaxed text-sm md:text-base">
+                    Characters automatically adapt to how well you remember them. Tap any card to practice stroke writing, bookmark tricky characters to your review list, or listen to native Japanese pronunciation instantly!
+                </p>
+            </div>
+<!-- BEGIN AADS AD UNIT 2452425 -->
+
+<div id="frame" style="width: 100%;margin: auto;position: relative; z-index: 99998;">
+          <iframe data-aa='2452425' src='//acceptable.a-ads.com/2452425/?size=Adaptive'
+                            style='border:0; padding:0; width:70%; height:auto; overflow:hidden;display: block;margin: auto'></iframe>
+        </div>
+
+<!-- END AADS AD UNIT 2452425 -->
+
+            <!-- Interactive Charts Section -->
+            <div class="space-y-4 text-center">
+                <div class="flex justify-center space-x-4">
+                    <button onclick="setKanaType('hiragana')" id="btnHiragana" class="px-6 py-2 rounded-lg font-bold bg-red-600 text-white shadow-md transition">Hiragana (Essential)</button>
+                    <button onclick="setKanaType('katakana')" id="btnKatakana" class="px-6 py-2 rounded-lg font-bold bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 transition">Katakana (Loanwords)</button>
+                </div>
+
+                <div id="kanaGrid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 pt-2">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+
+            <!-- Shared Social Widget for Tab 1 -->
+            <div class="bg-white dark:bg-stone-900 p-6 rounded-2xl border border-amber-900/20 dark:border-amber-500/20 shadow-md space-y-4 max-w-xl mx-auto text-center">
+                <h3 class="font-bold text-lg">Spread the Word & Support Learning</h3>
+                <div class="flex flex-wrap justify-center gap-2">
+                    <button onclick="shareSocial('twitter')" class="px-4 py-2 bg-sky-500 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Twitter / X</button>
+                    <button onclick="shareSocial('facebook')" class="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Facebook</button>
+                    <button onclick="shareSocial('linkedin')" class="px-4 py-2 bg-blue-700 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">LinkedIn</button>
+                    <button onclick="shareSocial('whatsapp')" class="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">WhatsApp</button>
+                    <button onclick="shareSocial('reddit')" class="px-4 py-2 bg-orange-600 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Reddit</button>
+                    <button onclick="shareSocial('telegram')" class="px-4 py-2 bg-cyan-600 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Telegram</button>
+                    <button onclick="shareSocial('pinterest')" class="px-4 py-2 bg-red-700 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Pinterest</button>
+                    <button onclick="shareSocial('copy')" class="px-4 py-2 bg-stone-700 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Copy Invite Link</button>
+                </div>
+                <p id="copyAlert-guide" class="copy-alert text-xs text-green-600 dark:text-green-400 hidden">Invite link copied to clipboard!</p>
+            </div>
+        </section>
+
+        <!-- TAB 2: SMART FLASHCARD SESSION -->
+        <section id="tab-flashcards" class="hidden space-y-8">
+            <div class="text-center max-w-2xl mx-auto space-y-2">
+                <h1 class="text-3xl md:text-4xl font-bold japanese-serif">Smart Flashcard Session</h1>
+                <p class="text-stone-600 dark:text-stone-400">Rate how easily you remembered each character. Cards you know well will appear less often, while tricky ones will return right when you need practice.</p>
+                <p class="text-xs text-amber-600 dark:text-amber-400 font-medium pt-1">💡 Keyboard shortcuts: <kbd class="px-1.5 py-0.5 bg-stone-200 dark:bg-stone-800 rounded">Space</kbd> = Flip | <kbd class="px-1.5 py-0.5 bg-stone-200 dark:bg-stone-800 rounded">1-5</kbd> = Rate Recall</p>
+            </div>
+
+            <!-- Advanced Multi-select Filter Bar -->
+            <div class="flex flex-wrap justify-center gap-2">
+                <button onclick="toggleFilter('new')" id="filter-new" class="px-4 py-1.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 border border-blue-300 transition shadow-sm">✓ New Cards</button>
+                <button onclick="toggleFilter('learning')" id="filter-learning" class="px-4 py-1.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/60 dark:text-yellow-300 border border-yellow-300 transition shadow-sm">✓ In Practice</button>
+                <button onclick="toggleFilter('learned')" id="filter-learned" class="px-4 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/60 dark:text-green-300 border border-green-300 transition shadow-sm">✓ Mastered</button>
+                <button onclick="toggleFilter('difficult')" id="filter-difficult" class="px-4 py-1.5 rounded-full text-xs font-bold bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300 border border-red-300 transition shadow-sm">✓ Tricky Deck Only</button>
+            </div>
+
+            <!-- Flashcard Card View -->
+            <div id="flashcardContainer" class="max-w-md mx-auto bg-white dark:bg-stone-900 border border-amber-900/20 dark:border-amber-500/20 rounded-2xl shadow-xl p-8 text-center space-y-6 relative transition-all">
+                
+                <!-- Clickable Status Badge Header & Difficult Bookmark Toggle -->
+                <div class="flex justify-between items-center text-xs">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-stone-400">Status:</span>
+                        <button onclick="cycleCurrentCardStatus()" id="cardStatusBadge" class="px-3 py-1 rounded-full font-bold uppercase transition hover:opacity-75 cursor-pointer shadow-sm">New</button>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="toggleCurrentDifficult()" id="cardDifficultBtn" class="px-2.5 py-1 rounded-full font-bold transition cursor-pointer shadow-sm bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-300" title="Bookmark to Tricky Deck">⭐ Save Tricky</button>
+                        <span id="cardProgress" class="text-stone-500">1 / 92</span>
+                    </div>
+                </div>
+
+                <!-- Main Card Face -->
+                <div onclick="flipCard()" class="cursor-pointer py-4 space-y-2 select-none">
+                    <div id="cardChar" class="text-6xl md:text-7xl japanese-serif font-bold text-red-600 dark:text-red-500">--</div>
+                    <div id="cardSubInfo" class="text-base text-amber-700 dark:text-amber-400 font-semibold tracking-wider pt-2">--</div>
+                    <div id="cardSrsInfo" class="text-[11px] text-stone-400 font-mono pt-1">Next Review: Today</div>
+                    <p class="text-xs text-stone-400 italic pt-2">(Click card to reveal answer)</p>
+                </div>
+
+                <!-- Grading Panel (0-5) -->
+                <div class="space-y-2 pt-2 border-t border-stone-200 dark:border-stone-800">
+                    <p class="text-[11px] font-bold text-stone-500 uppercase tracking-wider">How well did you remember this?</p>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="rateCard(0)" class="p-2 text-xs font-bold bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 border border-red-300 rounded-lg hover:opacity-90 transition">Forgot (0)</button>
+                        <button onclick="rateCard(1)" class="p-2 text-xs font-bold bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 border border-orange-300 rounded-lg hover:opacity-90 transition">Hard (1)</button>
+                        <button onclick="rateCard(2)" class="p-2 text-xs font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 rounded-lg hover:opacity-90 transition">Tricky (2)</button>
+                        <button onclick="rateCard(3)" class="p-2 text-xs font-bold bg-yellow-100 dark:bg-yellow-950/60 text-yellow-700 dark:text-yellow-300 border border-yellow-300 rounded-lg hover:opacity-90 transition">Okay (3)</button>
+                        <button onclick="rateCard(4)" class="p-2 text-xs font-bold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-300 rounded-lg hover:opacity-90 transition">Good (4)</button>
+                        <button onclick="rateCard(5)" class="p-2 text-xs font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 rounded-lg hover:opacity-90 transition">Perfect ⚡ (5)</button>
+                    </div>
+                </div>
+
+                <!-- Navigation Controls -->
+                <div class="flex justify-between pt-2 border-t border-stone-200 dark:border-stone-800">
+                    <button onclick="prevCard()" class="px-4 py-2 text-sm font-bold bg-stone-200 dark:bg-stone-800 rounded-lg hover:opacity-80 transition">← Previous</button>
+                    <button onclick="speakCurrentCard()" class="px-3 py-2 text-sm font-bold bg-amber-100 dark:bg-stone-800 text-amber-800 dark:text-amber-300 rounded-lg hover:opacity-80 transition flex items-center space-x-1" title="Play Pronunciation">
+                        <span>🔊</span> <span class="text-xs">Audio</span>
+                    </button>
+                    <button onclick="nextCard()" class="px-4 py-2 text-sm font-bold bg-stone-200 dark:bg-stone-800 rounded-lg hover:opacity-80 transition">Skip Card →</button>
+                </div>
+            </div>
+
+            <!-- Shared Social Widget for Tab 2 -->
+            <div class="bg-white dark:bg-stone-900 p-6 rounded-2xl border border-amber-900/20 dark:border-amber-500/20 shadow-md space-y-4 max-w-xl mx-auto text-center">
+                <h3 class="font-bold text-lg">Spread the Word & Support Learning</h3>
+                <div class="flex flex-wrap justify-center gap-2">
+                    <button onclick="shareSocial('twitter')" class="px-4 py-2 bg-sky-500 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Twitter / X</button>
+                    <button onclick="shareSocial('facebook')" class="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Facebook</button>
+                    <button onclick="shareSocial('linkedin')" class="px-4 py-2 bg-blue-700 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">LinkedIn</button>
+                    <button onclick="shareSocial('whatsapp')" class="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">WhatsApp</button>
+                    <button onclick="shareSocial('reddit')" class="px-4 py-2 bg-orange-600 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Reddit</button>
+                    <button onclick="shareSocial('telegram')" class="px-4 py-2 bg-cyan-600 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Telegram</button>
+                    <button onclick="shareSocial('pinterest')" class="px-4 py-2 bg-red-700 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Pinterest</button>
+                    <button onclick="shareSocial('copy')" class="px-4 py-2 bg-stone-700 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Copy Invite Link</button>
+                </div>
+                <p id="copyAlert-flashcards" class="copy-alert text-xs text-green-600 dark:text-green-400 hidden">Invite link copied to clipboard!</p>
+            </div>
+        </section>
+
+        <!-- TAB 3: TIMED SPEED DRILL MODE -->
+        <section id="tab-speeddrill" class="hidden space-y-8 max-w-xl mx-auto text-center">
+            <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-2xl border border-amber-900/20 dark:border-amber-500/20 shadow-xl space-y-6">
+                <div class="flex justify-between items-center text-sm font-bold text-stone-500">
+                    <span>⏱️ Time Left: <strong id="drillTimer" class="text-red-600 text-base">60s</strong></span>
+                    <span>🏆 Best Score: <strong id="drillHighScore" class="text-amber-600 text-base">0</strong></span>
+                </div>
+
+                <div id="drillStartScreen" class="space-y-6 py-8">
+                    <h1 class="text-3xl font-bold japanese-serif">60-Second Speed Drill</h1>
+                    <p class="text-sm text-stone-600 dark:text-stone-300">Test your lightning-fast recognition! See how many Romaji answers you can correctly match before time runs out.</p>
+                    <button onclick="startSpeedDrill()" class="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition text-base">Start Speed Drill ⚡</button>
+                </div>
+
+                <div id="drillPlayScreen" class="space-y-6 hidden">
+                    <div class="py-4">
+                        <span id="drillChar" class="text-7xl md:text-8xl japanese-serif font-bold text-red-600 dark:text-red-500">あ</span>
+                        <div class="mt-2 text-xs text-stone-400">Score: <strong id="drillCurrentScore" class="text-emerald-600 text-base">0</strong> correct</div>
+                    </div>
+
+                    <div id="drillOptions" class="grid grid-cols-2 gap-3 pt-2">
+                        <!-- Injected options -->
+                    </div>
+                </div>
+
+                <div id="drillEndScreen" class="space-y-6 py-8 hidden">
+                    <h2 class="text-2xl font-bold japanese-serif text-amber-600">Time's Up! 🎉</h2>
+                    <p class="text-stone-600 dark:text-stone-300">Fantastic session! You correctly recognized <strong id="drillFinalScore" class="text-red-600 font-bold text-lg">0</strong> characters.</p>
+                    <button onclick="startSpeedDrill()" class="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition text-sm">Play Again 🚀</button>
+                </div>
+            </div>
+
+            <!-- Shared Social Widget for Tab 3 -->
+            <div class="bg-white dark:bg-stone-900 p-6 rounded-2xl border border-amber-900/20 dark:border-amber-500/20 shadow-md space-y-4 text-center">
+                <h3 class="font-bold text-lg">Spread the Word & Support Learning</h3>
+                <div class="flex flex-wrap justify-center gap-2">
+                    <button onclick="shareSocial('twitter')" class="px-4 py-2 bg-sky-500 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Twitter / X</button>
+                    <button onclick="shareSocial('facebook')" class="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Facebook</button>
+                    <button onclick="shareSocial('linkedin')" class="px-4 py-2 bg-blue-700 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">LinkedIn</button>
+                    <button onclick="shareSocial('whatsapp')" class="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">WhatsApp</button>
+                    <button onclick="shareSocial('reddit')" class="px-4 py-2 bg-orange-600 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Reddit</button>
+                    <button onclick="shareSocial('telegram')" class="px-4 py-2 bg-cyan-600 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Telegram</button>
+                    <button onclick="shareSocial('pinterest')" class="px-4 py-2 bg-red-700 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Pinterest</button>
+                    <button onclick="shareSocial('copy')" class="px-4 py-2 bg-stone-700 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Copy Invite Link</button>
+                </div>
+                <p id="copyAlert-speeddrill" class="copy-alert text-xs text-green-600 dark:text-green-400 hidden">Invite link copied to clipboard!</p>
+            </div>
+        </section>
+
+        <!-- TAB 4: ABOUT & ALWAYS VISIBLE SOCIAL SHARING -->
+        <section id="tab-about" class="hidden space-y-8 max-w-2xl mx-auto text-center">
+            <div class="space-y-4">
+                <h1 class="text-3xl font-bold japanese-serif">About KanaCraft</h1>
+                <p class="text-stone-600 dark:text-stone-300 leading-relaxed text-sm md:text-base">
+                    KanaCraft is engineered from the ground up for language enthusiasts looking for a fast, friction-free way to master Japanese writing scripts. Clean design, smart active recall, native audio support, timed speed drills, custom practice decks, and zero clutter make it your ideal daily study companion.
+                </p>
+            </div>
+
+            <div class="bg-white dark:bg-stone-900 p-6 rounded-2xl border border-amber-900/20 dark:border-amber-500/20 shadow-md space-y-4">
+                <h3 class="font-bold text-lg">Spread the Word & Support Learning</h3>
+                <div class="flex flex-wrap justify-center gap-2">
+                    <button onclick="shareSocial('twitter')" class="px-4 py-2 bg-sky-500 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Twitter / X</button>
+                    <button onclick="shareSocial('facebook')" class="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Facebook</button>
+                    <button onclick="shareSocial('linkedin')" class="px-4 py-2 bg-blue-700 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">LinkedIn</button>
+                    <button onclick="shareSocial('whatsapp')" class="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">WhatsApp</button>
+                    <button onclick="shareSocial('reddit')" class="px-4 py-2 bg-orange-600 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Reddit</button>
+                    <button onclick="shareSocial('telegram')" class="px-4 py-2 bg-cyan-600 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Telegram</button>
+                    <button onclick="shareSocial('pinterest')" class="px-4 py-2 bg-red-700 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Pinterest</button>
+                    <button onclick="shareSocial('copy')" class="px-4 py-2 bg-stone-700 text-white text-xs font-bold rounded-lg hover:opacity-90 transition">Copy Invite Link</button>
+                </div>
+                <p id="copyAlert-about" class="copy-alert text-xs text-green-600 dark:text-green-400 hidden">Invite link copied to clipboard!</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- WRITING CANVAS MODAL POPUP -->
+    <div id="writingModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-stone-900 border border-amber-900/30 rounded-2xl max-w-sm w-full p-6 space-y-4 text-center shadow-2xl relative">
+            <button onclick="closeWritingModal()" class="absolute top-4 right-4 text-stone-400 hover:text-red-500 text-lg font-bold" aria-label="Close Writing Modal">✕</button>
+            
+            <div>
+                <span id="modalKanaChar" class="text-7xl japanese-serif font-bold text-red-600 dark:text-red-500">あ</span>
+                <p id="modalKanaRomaji" class="text-sm font-semibold text-amber-700 dark:text-amber-400 mt-1">Romaji: a</p>
+            </div>
+
+            <p class="text-xs text-stone-500">Practice stroke order directly inside the grid below:</p>
+
+            <div class="relative w-64 h-64 mx-auto border-2 border-dashed border-stone-300 dark:border-stone-700 rounded-lg overflow-hidden drawing-grid cursor-crosshair">
+                <canvas id="drawCanvas" width="256" height="256" class="touch-none"></canvas>
+            </div>
+
+            <div class="flex justify-center space-x-3 pt-2">
+                <button onclick="speakModalChar()" class="px-3 py-1.5 text-xs font-bold bg-amber-100 dark:bg-stone-800 text-amber-800 dark:text-amber-300 rounded-lg">🔊 Pronounce</button>
+                <button onclick="clearCanvas()" class="px-4 py-1.5 text-xs font-bold bg-stone-200 dark:bg-stone-800 rounded-lg">Reset Canvas</button>
+                <button onclick="closeWritingModal()" class="px-4 py-1.5 text-xs font-bold bg-red-600 text-white rounded-lg">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-amber-900/20 dark:border-amber-500/20 py-6 text-center text-xs text-stone-500">
+        <p>&copy; 2026 KanaCraft. Empowering Japanese language learners worldwide. All rights reserved.</p>
+    </footer>
+
+    <!-- App Script with Unified Memory Terminology -->
+    <script>
+        let defaultHiragana = [
+            {c:'あ', r:'a'}, {c:'い', r:'i'}, {c:'う', r:'u'}, {c:'え', r:'e'}, {c:'お', r:'o'},
+            {c:'か', r:'ka'}, {c:'き', r:'ki'}, {c:'く', r:'ku'}, {c:'け', r:'ke'}, {c:'こ', r:'ko'},
+            {c:'さ', r:'sa'}, {c:'し', r:'shi'}, {c:'す', r:'su'}, {c:'せ', r:'se'}, {c:'そ', r:'so'},
+            {c:'た', r:'ta'}, {c:'ち', r:'chi'}, {c:'つ', r:'tsu'}, {c:'て', r:'te'}, {c:'と', r:'to'},
+            {c:'な', r:'na'}, {c:'に', r:'ni'}, {c:'ぬ', r:'nu'}, {c:'ね', r:'ne'}, {c:'の', r:'no'},
+            {c:'は', r:'ha'}, {c:'ひ', r:'hi'}, {c:'ふ', r:'fu'}, {c:'へ', r:'he'}, {c:'ほ', r:'ho'},
+            {c:'ま', r:'ma'}, {c:'み', r:'mi'}, {c:'む', r:'mu'}, {c:'め', r:'me'}, {c:'も', r:'mo'},
+            {c:'や', r:'ya'}, {c:'ゆ', r:'yu'}, {c:'よ', r:'yo'},
+            {c:'ら', r:'ra'}, {c:'り', r:'ri'}, {c:'る', r:'ru'}, {c:'れ', r:'re'}, {c:'ろ', r:'ro'},
+            {c:'わ', r:'wa'}, {c:'を', r:'wo'}, {c:'ん', r:'n'}
+        ];
+
+        let defaultKatakana = [
+            {c:'ア', r:'a'}, {c:'イ', r:'i'}, {c:'ウ', r:'u'}, {c:'エ', r:'e'}, {c:'オ', r:'o'},
+            {c:'カ', r:'ka'}, {c:'キ', r:'ki'}, {c:'ク', r:'ku'}, {c:'ケ', r:'ke'}, {c:'コ', r:'ko'},
+            {c:'サ', r:'sa'}, {c:'シ', r:'shi'}, {c:'ス', r:'su'}, {c:'セ', r:'se'}, {c:'ソ', r:'so'},
+            {c:'タ', r:'ta'}, {c:'チ', r:'chi'}, {c:'ツ', r:'tsu'}, {c:'テ', r:'te'}, {c:'ト', r:'to'},
+            {c:'ナ', r:'na'}, {c:'ニ', r:'ni'}, {c:'ヌ', r:'nu'}, {c:'ネ', r:'ne'}, {c:'ノ', r:'no'},
+            {c:'ハ', r:'ha'}, {c:'ヒ', r:'hi'}, {c:'フ', r:'fu'}, {c:'ヘ', r:'he'}, {c:'ホ', r:'ho'},
+            {c:'マ', r:'ma'}, {c:'ミ', r:'mi'}, {c:'ム', r:'mu'}, {c:'メ', r:'me'}, {c:'モ', r:'mo'},
+            {c:'ヤ', r:'ya'}, {c:'ユ', r:'yu'}, {c:'ヨ', r:'yo'},
+            {c:'ラ', r:'ra'}, {c:'リ', r:'ri'}, {c:'ル', r:'ru'}, {c:'レ', r:'re'}, {c:'ロ', r:'ro'},
+            {c:'ワ', r:'wa'}, {c:'ヲ', r:'wo'}, {c:'ン', r:'n'}
+        ];
+
+        let hiraganaMaster = [];
+        let katakanaMaster = [];
+        let masterKanaDeck = [];
+        
+        let currentKanaType = 'hiragana';
+        let showRomaji = true;
+        
+        let activeFilters = new Set(['new', 'learning', 'learned', 'difficult']);
+        let filteredDeck = [];
+        let currentCardIndex = 0;
+        let isCardFlipped = false;
+        let activeTabName = 'guide';
+        let currentModalChar = 'あ';
+
+        let drillInterval = null;
+        let drillTimerSecs = 60;
+        let drillScore = 0;
+        let drillCurrentTarget = null;
+
+        window.onload = function() {
+            initStorageData();
+            initStreak();
+            switchTab('guide');
+            renderKanaGrid();
+            rebuildDeck();
+            initCanvas();
+            initKeyboardShortcuts();
+            document.getElementById('drillHighScore').innerText = localStorage.getItem('kanacraft_drill_highscore') || '0';
+        };
+
+        function initStorageData() {
+            const savedHira = localStorage.getItem('kanacraft_hira_data');
+            const savedKata = localStorage.getItem('kanacraft_kata_data');
+
+            if (savedHira) {
+                hiraganaMaster = JSON.parse(savedHira);
+            } else {
+                hiraganaMaster = defaultHiraKanaInit(defaultHiragana);
+                saveStorageData();
+            }
+
+            if (savedKata) {
+                katakanaMaster = JSON.parse(savedKata);
+            } else {
+                katakanaMaster = defaultHiraKanaInit(defaultKatakana);
+                saveStorageData();
+            }
+
+            masterKanaDeck = [...hiraganaMaster, ...katakanaMaster];
+        }
+
+        function defaultHiraKanaInit(arr) {
+            return arr.map(item => ({
+                ...item,
+                interval: 0,
+                repetition: 0,
+                efactor: 2.5,
+                status: 'new',
+                difficult: false
+            }));
+        }
+
+        function saveStorageData() {
+            localStorage.setItem('kanacraft_hira_data', JSON.stringify(hiraganaMaster));
+            localStorage.setItem('kanacraft_kata_data', JSON.stringify(katakanaMaster));
+            masterKanaDeck = [...hiraganaMaster, ...katakanaMaster];
+        }
+
+        function applySM2(card, grade) {
+            if (grade < 3) {
+                card.repetition = 0;
+                card.interval = 1;
+                card.status = 'learning';
+            } else {
+                if (card.repetition === 0) {
+                    card.interval = 1;
+                } else if (card.repetition === 1) {
+                    card.interval = 6;
+                } else {
+                    card.interval = Math.round(card.interval * card.efactor);
+                }
+                card.repetition += 1;
+                card.status = card.repetition >= 3 ? 'learned' : 'learning';
+            }
+
+            card.efactor = card.efactor + (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02));
+            if (card.efactor < 1.3) card.efactor = 1.3;
+
+            if (grade <= 1) {
+                card.difficult = true;
+            } else if (grade >= 4 && card.difficult) {
+                card.difficult = false;
+            }
+
+            saveStorageData();
+        }
+
+        function initStreak() {
+            let streak = localStorage.getItem('kanacraft_streak');
+            let lastDate = localStorage.getItem('kanacraft_last_date');
+            const today = new Date().toDateString();
+
+            if (!streak) {
+                streak = 1;
+                localStorage.setItem('kanacraft_streak', streak);
+                localStorage.setItem('kanacraft_last_date', today);
+            } else if (lastDate !== today) {
+                const yesterday = new Date(Date.now() - 86400000).toDateString();
+                if (lastDate === yesterday) {
+                    streak = parseInt(streak) + 1;
+                }
+                localStorage.setItem('kanacraft_streak', streak);
+                localStorage.setItem('kanacraft_last_date', today);
+            }
+            document.getElementById('streakCount').innerText = streak;
+        }
+
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ja-JP';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function speakCurrentCard() {
+            if (filteredDeck.length === 0) return;
+            const card = filteredDeck[currentCardIndex];
+            speakText(card.c);
+        }
+
+        function speakModalChar() {
+            speakText(currentModalChar);
+        }
+
+        function initKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                if (activeTabName !== 'flashcards') return;
+                if (document.getElementById('writingModal').classList.contains('hidden') === false) return;
+
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    flipCard();
+                } else if (e.key >= '0' && e.key <= '5') {
+                    e.preventDefault();
+                    rateCard(parseInt(e.key));
+                }
+            });
+        }
+
+        function switchTab(tabName) {
+            if (activeTabName === 'speeddrill' && drillInterval) {
+                clearInterval(drillInterval);
+                drillInterval = null;
+            }
+
+            activeTabName = tabName;
+            ['guide', 'flashcards', 'speeddrill', 'about'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`)?.classList.remove('text-red-600', 'dark:text-red-400');
+            });
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabName}`)?.classList.add('text-red-600', 'dark:text-red-400');
+
+            if (tabName === 'flashcards') {
+                rebuildDeck();
+            }
+        }
+
+        function setKanaType(type) {
+            currentKanaType = type;
+            document.getElementById('btnHiragana').className = type === 'hiragana' ? "px-6 py-2 rounded-lg font-bold bg-red-600 text-white shadow-md transition" : "px-6 py-2 rounded-lg font-bold bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 transition";
+            document.getElementById('btnKatakana').className = type === 'katakana' ? "px-6 py-2 rounded-lg font-bold bg-red-600 text-white shadow-md transition" : "px-6 py-2 rounded-lg font-bold bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 transition";
+            renderKanaGrid();
+        }
+
+        function renderKanaGrid() {
+            const grid = document.getElementById('kanaGrid');
+            const data = currentKanaType === 'hiragana' ? hiraganaMaster : katakanaMaster;
+            
+            grid.innerHTML = data.map((item, idx) => `
+                <div class="bg-white dark:bg-stone-900 border border-amber-900/10 dark:border-amber-500/10 p-3 rounded-xl shadow-sm text-center flex flex-col items-center justify-between space-y-1">
+                    <div onclick="openWritingModal('${item.c}', '${item.r}')" class="cursor-pointer hover:scale-110 transition py-1 group relative">
+                        <span class="text-3xl japanese-serif font-bold text-stone-800 dark:text-stone-100">${item.c}</span>
+                        <div class="text-[10px] text-stone-500 ${showRomaji ? '' : 'invisible'}"><strong>${item.r}</strong></div>
+                    </div>
+                    <div class="text-[9px] text-stone-400 font-mono">Review: ${item.interval}d</div>
+                    <div class="flex items-center space-x-1 w-full">
+                        <button onclick="speakText('${item.c}')" class="text-[10px] px-1 py-1 bg-amber-100 dark:bg-stone-800 rounded text-amber-800 dark:text-amber-300 hover:opacity-80" title="Pronounce">🔊</button>
+                        <button onclick="toggleChartDifficult('${currentKanaType}', ${idx})" class="text-[10px] px-1.5 py-1 rounded transition ${item.difficult ? 'bg-red-500 text-white' : 'bg-stone-200 dark:bg-stone-800 text-stone-400'}" title="Toggle Tricky Bookmark">⭐</button>
+                        <button onclick="cycleChartCardStatus('${currentKanaType}', ${idx})" class="flex-grow text-[10px] font-bold py-1 px-1 rounded uppercase transition cursor-pointer shadow-sm ${
+                            item.status === 'new' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300' :
+                            item.status === 'learning' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/60 dark:text-yellow-300' :
+                            'bg-green-100 text-green-800 dark:bg-green-900/60 dark:text-green-300'
+                        }">
+                            ${item.status === 'learned' ? 'mastered' : item.status}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleChartDifficult(type, index) {
+            const arr = type === 'hiragana' ? hiraganaMaster : katakanaMaster;
+            arr[index].difficult = !arr[index].difficult;
+            saveStorageData();
+            renderKanaGrid();
+        }
+
+        function cycleChartCardStatus(type, index) {
+            const arr = type === 'hiragana' ? hiraganaMaster : katakanaMaster;
+            const card = arr[index];
+            
+            card.status = card.status === 'new' ? 'learning' : 
+                          card.status === 'learning' ? 'learned' : 'new';
+
+            saveStorageData();
+            renderKanaGrid();
+        }
+
+        function toggleFilter(status) {
+            const btn = document.getElementById(`filter-${status}`);
+            if (activeFilters.has(status)) {
+                if (activeFilters.size === 1) return;
+                activeFilters.delete(status);
+                btn.className = "px-4 py-1.5 rounded-full text-xs font-bold bg-stone-200 dark:bg-stone-800 text-stone-400 dark:text-stone-500 border border-stone-300 dark:border-stone-700 transition shadow-sm";
+                let label = status === 'difficult' ? 'Tricky Deck Only' : (status === 'learned' ? 'Mastered' : status.charAt(0).toUpperCase() + status.slice(1));
+                btn.innerText = `○ ${label}`;
+            } else {
+                activeFilters.add(status);
+                const colorMap = {
+                    new: 'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 border-blue-300',
+                    learning: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/60 dark:text-yellow-300 border-yellow-300',
+                    learned: 'bg-green-100 text-green-800 dark:bg-green-900/60 dark:text-green-300 border-green-300',
+                    difficult: 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300 border-red-300'
+                };
+                btn.className = `px-4 py-1.5 rounded-full text-xs font-bold border transition shadow-sm ${colorMap[status]}`;
+                let label = status === 'difficult' ? 'Tricky Deck Only' : (status === 'learned' ? 'Mastered' : status.charAt(0).toUpperCase() + status.slice(1));
+                btn.innerText = `✓ ${label}`;
+            }
+            rebuildDeck();
+        }
+
+        function rebuildDeck() {
+            filteredDeck = masterKanaDeck.filter(card => {
+                if (activeFilters.has('difficult') && !card.difficult) return false;
+                return activeFilters.has(card.status);
+            });
+            currentCardIndex = 0;
+            isCardFlipped = false;
+            updateFlashcard();
+        }
+
+        function updateFlashcard() {
+            if (filteredDeck.length === 0) {
+                document.getElementById('cardChar').innerText = "∅";
+                document.getElementById('cardSubInfo').innerText = "Adjust filters to view cards";
+                document.getElementById('cardSrsInfo').innerText = "Next Review: Today";
+                document.getElementById('cardProgress').innerText = "0 / 0";
+                const badge = document.getElementById('cardStatusBadge');
+                badge.innerText = "NONE";
+                badge.className = "px-3 py-1 rounded-full font-bold uppercase text-xs cursor-pointer shadow-sm bg-stone-300 text-stone-700";
+                const diffBtn = document.getElementById('cardDifficultBtn');
+                diffBtn.innerText = "⭐ Save Tricky";
+                diffBtn.className = "px-2.5 py-1 rounded-full font-bold transition cursor-pointer shadow-sm bg-stone-200 dark:bg-stone-800 text-stone-400";
+                return;
+            }
+
+            const card = filteredDeck[currentCardIndex];
+            document.getElementById('cardChar').innerText = isCardFlipped ? card.r.toUpperCase() : card.c;
+            
+            const subInfo = document.getElementById('cardSubInfo');
+            if (showRomaji) {
+                subInfo.innerText = isCardFlipped ? `Kana: ${card.c}` : `Romaji: ${card.r}`;
+                subInfo.classList.remove('invisible');
+            } else {
+                subInfo.classList.add('invisible');
+            }
+
+            document.getElementById('cardSrsInfo').innerText = `Next Review in: ${card.interval} days | Practice Streak: ${card.repetition}`;
+            document.getElementById('cardProgress').innerText = `${currentCardIndex + 1} / ${filteredDeck.length}`;
+            
+            const badge = document.getElementById('cardStatusBadge');
+            let displayStatus = card.status === 'learned' ? 'mastered' : card.status;
+            badge.innerText = displayStatus.toUpperCase();
+            badge.className = `px-3 py-1 rounded-full font-bold uppercase text-xs cursor-pointer shadow-sm ${
+                card.status === 'new' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300' :
+                card.status === 'learning' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/60 dark:text-yellow-300' :
+                'bg-green-100 text-green-800 dark:text-green-900/60 dark:text-green-300'
+            }`;
+
+            const diffBtn = document.getElementById('cardDifficultBtn');
+            if (card.difficult) {
+                diffBtn.innerText = "⭐ Tricky Saved";
+                diffBtn.className = "px-2.5 py-1 rounded-full font-bold transition cursor-pointer shadow-sm bg-red-500 text-white";
+            } else {
+                diffBtn.innerText = "⭐ Save Tricky";
+                diffBtn.className = "px-2.5 py-1 rounded-full font-bold transition cursor-pointer shadow-sm bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-300";
+            }
+        }
+
+        function triggerCardAnimation(animClass) {
+            const container = document.getElementById('flashcardContainer');
+            container.classList.remove('animate-correct', 'animate-incorrect');
+            void container.offsetWidth;
+            container.classList.add(animClass);
+        }
+
+        function cycleCurrentCardStatus() {
+            if (filteredDeck.length === 0) return;
+            const card = filteredDeck[currentCardIndex];
+            card.status = card.status === 'new' ? 'learning' : 
+                          card.status === 'learning' ? 'learned' : 'new';
+            saveStorageData();
+            renderKanaGrid();
+            updateFlashcard();
+        }
+
+        function toggleCurrentDifficult() {
+            if (filteredDeck.length === 0) return;
+            const card = filteredDeck[currentCardIndex];
+            card.difficult = !card.difficult;
+            saveStorageData();
+            renderKanaGrid();
+            updateFlashcard();
+        }
+
+        function rateCard(grade) {
+            if (filteredDeck.length === 0) return;
+            const card = filteredDeck[currentCardIndex];
+            
+            applySM2(card, grade);
+
+            if (grade < 3) {
+                triggerCardAnimation('animate-incorrect');
+            } else {
+                triggerCardAnimation('animate-correct');
+            }
+
+            renderKanaGrid();
+            setTimeout(() => {
+                nextCard();
+            }, 250);
+        }
+
+        function flipCard() {
+            if (filteredDeck.length === 0) return;
+            isCardFlipped = !isCardFlipped;
+            updateFlashcard();
+        }
+
+        function nextCard() {
+            if (filteredDeck.length === 0) return;
+            isCardFlipped = false;
+            currentCardIndex = (currentCardIndex + 1) % filteredDeck.length;
+            updateFlashcard();
+        }
+
+        function prevCard() {
+            if (filteredDeck.length === 0) return;
+            isCardFlipped = false;
+            currentCardIndex = (currentCardIndex - 1 + filteredDeck.length) % filteredDeck.length;
+            updateFlashcard();
+        }
+
+        function startSpeedDrill() {
+            if (drillInterval) clearInterval(drillInterval);
+            drillTimerSecs = 60;
+            drillScore = 0;
+            document.getElementById('drillTimer').innerText = `${drillTimerSecs}s`;
+            document.getElementById('drillCurrentScore').innerText = drillScore;
+            
+            document.getElementById('drillStartScreen').classList.add('hidden');
+            document.getElementById('drillEndScreen').classList.add('hidden');
+            document.getElementById('drillPlayScreen').classList.remove('hidden');
+
+            nextDrillRound();
+
+            drillInterval = setInterval(() => {
+                drillTimerSecs--;
+                document.getElementById('drillTimer').innerText = `${drillTimerSecs}s`;
+                if (drillTimerSecs <= 0) {
+                    clearInterval(drillInterval);
+                    drillInterval = null;
+                    endSpeedDrill();
+                }
+            }, 1000);
+        }
+
+        function nextDrillRound() {
+            drillCurrentTarget = masterKanaDeck[Math.floor(Math.random() * masterKanaDeck.length)];
+            document.getElementById('drillChar').innerText = drillCurrentTarget.c;
+
+            let options = [drillCurrentTarget.r];
+            while (options.length < 4) {
+                const randomCard = masterKanaDeck[Math.floor(Math.random() * masterKanaDeck.length)];
+                if (!options.includes(randomCard.r)) {
+                    options.push(randomCard.r);
+                }
+            }
+            options.sort(() => Math.random() - 0.5);
+
+            const optionsContainer = document.getElementById('drillOptions');
+            optionsContainer.innerHTML = options.map(opt => `
+                <button onclick="checkDrillAnswer('${opt}')" class="p-3 bg-stone-100 dark:bg-stone-800 hover:bg-amber-100 dark:hover:bg-amber-950/60 font-bold rounded-xl transition text-base border border-stone-200 dark:border-stone-700">${opt}</button>
+            `).join('');
+        }
+
+        function checkDrillAnswer(selectedRomaji) {
+            if (selectedRomaji === drillCurrentTarget.r) {
+                drillScore++;
+                document.getElementById('drillCurrentScore').innerText = drillScore;
+                speakText(drillCurrentTarget.c);
+            }
+            nextDrillRound();
+        }
+
+        function endSpeedDrill() {
+            document.getElementById('drillPlayScreen').classList.add('hidden');
+            document.getElementById('drillEndScreen').classList.remove('hidden');
+            document.getElementById('drillFinalScore').innerText = drillScore;
+
+            let highScore = parseInt(localStorage.getItem('kanacraft_drill_highscore') || '0');
+            if (drillScore > highScore) {
+                highScore = drillScore;
+                localStorage.setItem('kanacraft_drill_highscore', highScore);
+            }
+            document.getElementById('drillHighScore').innerText = highScore;
+        }
+
+        function toggleRomaji() {
+            showRomaji = !showRomaji;
+            const statusEl = document.getElementById('romajiStatus');
+            statusEl.innerText = showRomaji ? "ON" : "OFF";
+            statusEl.className = showRomaji ? "text-green-600 dark:text-green-400 font-bold" : "text-stone-400 font-bold";
+            renderKanaGrid();
+            updateFlashcard();
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        let canvas, ctx, isDrawing = false;
+        function initCanvas() {
+            canvas = document.getElementById('drawCanvas');
+            ctx = canvas.getContext('2d');
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#dc2626';
+
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDraw);
+            canvas.addEventListener('mouseleave', stopDraw);
+
+            canvas.addEventListener('touchstart', (e) => { startDraw(e.touches[0]); e.preventDefault(); });
+            canvas.addEventListener('touchmove', (e) => { draw(e.touches[0]); e.preventDefault(); });
+            canvas.addEventListener('touchend', stopDraw);
+        }
+
+        function openWritingModal(char, romaji) {
+            currentModalChar = char;
+            document.getElementById('modalKanaChar').innerText = char;
+            document.getElementById('modalKanaRomaji').innerText = `Romaji: ${romaji}`;
+            document.getElementById('writingModal').classList.remove('hidden');
+            clearCanvas();
+        }
+
+        function closeWritingModal() {
+            document.getElementById('writingModal').classList.add('hidden');
+        }
+
+        function startDraw(e) {
+            isDrawing = true;
+            ctx.beginPath();
+            const rect = canvas.getBoundingClientRect();
+            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.stroke();
+        }
+
+        function stopDraw() {
+            isDrawing = false;
+        }
+
+        function clearCanvas() {
+            if(ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function shareSocial(platform) {
+            const url = encodeURIComponent(window.location.href);
+            const text = encodeURIComponent("Master Japanese Hiragana and Katakana interactively with KanaCraft smart flashcards!");
+            
+            if(platform === 'twitter') {
+                window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank');
+            } else if(platform === 'facebook') {
+                window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+            } else if(platform === 'linkedin') {
+                window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank');
+            } else if(platform === 'whatsapp') {
+                window.open(`https://api.whatsapp.com/send?text=${text}%20${url}`, '_blank');
+            } else if(platform === 'reddit') {
+                window.open(`https://www.reddit.com/submit?url=${url}&title=${text}`, '_blank');
+            } else if(platform === 'telegram') {
+                window.open(`https://t.me/share/url?url=${url}&text=${text}`, '_blank');
+            } else if(platform === 'pinterest') {
+                window.open(`https://pinterest.com/pin/create/button/?url=${url}&description=${text}`, '_blank');
+            } else if(platform === 'copy') {
+                navigator.clipboard.writeText(window.location.href);
+                const alertEl = document.getElementById(`copyAlert-${activeTabName}`);
+                if (alertEl) {
+                    alertEl.classList.remove('hidden');
+                    setTimeout(() => alertEl.classList.add('hidden'), 2500);
+                }
+            }
+        }
+
+<!-- BEGIN AADS AD UNIT 2452426 -->
+
+<div id="frame" style="width: 100%;margin: auto;position: relative; z-index: 99998;">
+          <iframe data-aa='2452426' src='//acceptable.a-ads.com/2452426/?size=Adaptive'
+                            style='border:0; padding:0; width:70%; height:auto; overflow:hidden;display: block;margin: auto'></iframe>
+        </div>
+
+<!-- END AADS AD UNIT 2452426 -->
+    </script>
+</body>
+</html>
